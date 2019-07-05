@@ -1,5 +1,6 @@
 {
     "name": "devlabor/csv-seeder",
+	"version": "1.0.0-dev",
     "require": {
         "laravel/framework": "^5.8"
     },
