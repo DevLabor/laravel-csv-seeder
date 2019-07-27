@@ -10,34 +10,34 @@ use \DevLabor\CsvSeeder\Database\Seeder\CsvSeeder
 // ...
 
 class ProductsTableSeeder extends CsvSeeder {
-/**
- * UsersTableSeeder constructor.
- */
-public function __construct()
-{
-	$this->columnMapping = [
-		0 => 'article_no',
-		1 => 'name',
-		2 => 'text',
-		3 => 'price'
-	];
-}
-
-/**
- * Run the database seeds.
- *
- * @return void
- */
-public function run()
-{
-	// Recommended when importing larger CSVs
-	\Illuminate\Support\Facades\DB::disableQueryLog();
-
-	// Uncomment the below to wipe the table clean before populating
-	\Illuminate\Support\Facades\DB::table($this->guessTableName())->truncate();
-
-	parent::run();
-}
+	/**
+	 * UsersTableSeeder constructor.
+	 */
+	public function __construct()
+	{
+		$this->columnMapping = [
+			0 => 'article_no',
+			1 => 'name',
+			2 => 'text',
+			3 => 'price'
+		];
+	}
+	
+	/**
+	 * Run the database seeds.
+	 *
+	 * @return void
+	 */
+	public function run()
+	{
+		// Recommended when importing larger CSVs
+		\Illuminate\Support\Facades\DB::disableQueryLog();
+	
+		// Uncomment the below to wipe the table clean before populating
+		\Illuminate\Support\Facades\DB::table($this->guessTableName())->truncate();
+	
+		parent::run();
+	}
 }
 ```
 
@@ -66,7 +66,7 @@ public $filename = '';
 ```
 
 ```php
-// DB field that to be hashed, most likely a password field. If your password has a different name, please overload this variable from our seeder class.
+// Table field that to be hashed, most likely a password field. If your password has a different name, please overload this variable from our seeder class.
 public $hashable = 'password';
 ```
 
@@ -76,7 +76,7 @@ public $insertChunkSize = 50;
 ```
 
 ```php
-// CSV delimiter (defaults to ;)
+// CSV delimiter
 public $csvDelimiter = ';';
 ```
 
@@ -92,7 +92,7 @@ public $trimWhitespace = true;
 
 ```php
 /**
- * The mapping of CSV to DB column. If not specified manually, the first row (after $offsetRows) of your CSV will be read as your table columns.
+ * The mapping of CSV to table column. If not specified manually, the first row (after $offsetRows) of your CSV will be read as your table columns.
  *
  * In order to read the first, third and fourth columns of your CSV only, use:
  * array(
