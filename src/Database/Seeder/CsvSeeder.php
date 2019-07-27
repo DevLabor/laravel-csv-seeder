@@ -7,6 +7,7 @@ use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 /**
  * Taken from http://laravelsnippets.com/snippets/seeding-database-with-csv-files-cleanly
@@ -16,17 +17,15 @@ class CsvSeeder extends Seeder
 {
 	/**
 	 * DB table name
-	 *
 	 * @var string
 	 */
-	public $table;
+	public $table = '';
 
 	/**
 	 * CSV filename
-	 *
 	 * @var string
 	 */
-	public $filename;
+	public $filename = '';
 
 	/**
 	 * DB field that to be hashed, most likely a password field.
@@ -45,28 +44,28 @@ class CsvSeeder extends Seeder
 	 *
 	 * @var int
 	 */
-	public $insert_chunk_size = 50;
+	public $insertChunkSize = 50;
 
 	/**
 	 * CSV delimiter (defaults to ;)
 	 *
 	 * @var string
 	 */
-	public $csv_delimiter = ';';
+	public $csvDelimiter = ';';
 
 	/**
 	 * Number of rows to skip at the start of the CSV
 	 *
 	 * @var int
 	 */
-	public $offset_rows = 0;
+	public $offsetRows = 0;
 
 	/**
 	 * Can be used to tell the import to trim any leading or trailing white space from the column;
 	 *
 	 * @var bool
 	 */
-	public $should_trim = true;
+	public $trimWhitespace = true;
 
 	/**
 	 * The mapping of CSV to DB column. If not specified manually, the first
@@ -81,14 +80,14 @@ class CsvSeeder extends Seeder
 	 *
 	 * @var array
 	 */
-	public $mapping = [];
+	public $columnMapping = [];
 
 	/**
 	 * Run DB seed
 	 */
 	public function run()
 	{
-		$this->seedFromCSV($this->guessFileName(), $this->csv_delimiter);
+		$this->seedFromCSV($this->guessFileName(), $this->csvDelimiter);
 	}
 
 	/**
@@ -115,15 +114,15 @@ class CsvSeeder extends Seeder
 	{
 		if ( !file_exists($filename) || !is_readable($filename) )
 		{
-			Log::error("CSV insert failed: CSV " . $filename . " does not exist or is not readable.");
+			Log::error("CSV insert failed: " . $filename . " does not exist or is not readable.");
 			return FALSE;
 		}
 
 		// check if file is gzipped
 		$finfo = finfo_open(FILEINFO_MIME_TYPE);
-		$file_mime_type = finfo_file($finfo, $filename);
+		$mimeType = finfo_file($finfo, $filename);
 		finfo_close($finfo);
-		$gzipped = strcmp($file_mime_type, "application/x-gzip") == 0;
+		$gzipped = strcmp($mimeType, "application/x-gzip") == 0;
 
 		$handle = $gzipped ? gzopen($filename, 'r') : fopen($filename, 'r');
 
@@ -146,10 +145,10 @@ class CsvSeeder extends Seeder
 			return [];
 
 		$header = NULL;
-		$row_count = 0;
+		$rowCount = 0;
 		$data = [];
-		$mapping = $this->mapping ?: [];
-		$offset = $this->offset_rows;
+		$mapping = $this->columnMapping ?: [];
+		$offset = $this->offsetRows;
 
 		while ( ($row = fgetcsv($handle, 0, $deliminator)) !== FALSE )
 		{
@@ -182,13 +181,13 @@ class CsvSeeder extends Seeder
 				if ( !$row )
 					continue;
 
-				$data[$row_count] = $row;
+				$data[$rowCount] = $row;
 
 				// Chunk size reached, insert
-				if ( ++$row_count == $this->insert_chunk_size )
+				if ( ++$rowCount == $this->insertChunkSize )
 				{
 					$this->insert($data);
-					$row_count = 0;
+					$rowCount = 0;
 					// clear the data array explicitly when it was inserted so
 					// that nothing is left, otherwise a leftover scenario can
 					// cause duplicate inserts
@@ -216,22 +215,22 @@ class CsvSeeder extends Seeder
 	 */
 	public function readRow( array $row, array $mapping )
 	{
-		$row_values = [];
+		$rowValues = [];
 
 		foreach ($mapping as $csvCol => $dbCol) {
 			if (!isset($row[$csvCol]) || $row[$csvCol] === '') {
-				$row_values[$dbCol] = NULL;
+				$rowValues[$dbCol] = NULL;
 			}
 			else {
-				$row_values[$dbCol] = $this->should_trim ? trim($row[$csvCol]) : $row[$csvCol];
+				$rowValues[$dbCol] = $this->trimWhitespace ? trim($row[$csvCol]) : $row[$csvCol];
 			}
 		}
 
-		if ($this->hashable && isset($row_values[$this->hashable])) {
-			$row_values[$this->hashable] =  Hash::make($row_values[$this->hashable]);
+		if ($this->hashable && isset($rowValues[$this->hashable])) {
+			$rowValues[$this->hashable] =  Hash::make($rowValues[$this->hashable]);
 		}
 
-		return $row_values;
+		return $rowValues;
 	}
 
 	/**
@@ -245,33 +244,33 @@ class CsvSeeder extends Seeder
 		try {
 			DB::table($this->guessTableName())->insert($seedData);
 		} catch (\Exception $e) {
-			Log::error("CSV insert failed: " . $e->getMessage() . " - CSV " . $this->guessFileName());
-			return FALSE;
+			Log::error("CSV insert failed: " . $e->getMessage() . " - file: " . $this->guessFileName());
+			return false;
 		}
 
-		return TRUE;
+		return true;
 	}
 
 	/**
 	 * Guesses table name.
 	 */
 	protected function guessTableName() {
-		if ($this->table) {
-			return $this->table;
+		if (!$this->table) {
+			$this->table = strtolower(str_replace('TableSeeder', '', class_basename(get_class($this))));
 		}
-		
-		// get table name from seeder
+
+		return $this->table;
 	}
 
 	/**
-	 * Guesses table name.
+	 * Guesses filename name.
 	 */
 	protected function guessFileName() {
-		if ($this->filename) {
-			return $this->filename;
+		if (!$this->filename) {
+			$filename = Str::snake(str_replace('TableSeeder', '', class_basename(get_class($this))));			
+			$this->filename = base_path() . '/database/seeds/csvs/' . $filename . '.csv';
 		}
-		
-		// return base_path().'/database/seeds/csvs/property_types.csv';
-		// get table name from seeder
+
+		return $this->filename;
 	}
 }
