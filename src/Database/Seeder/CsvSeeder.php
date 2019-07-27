@@ -256,7 +256,7 @@ class CsvSeeder extends Seeder
 	 */
 	protected function guessTableName() {
 		if (!$this->table) {
-			$this->table = strtolower(str_replace('TableSeeder', '', class_basename(get_class($this))));
+			$this->table = Str::snake(str_replace('TableSeeder', '', class_basename(get_class($this))));
 		}
 
 		return $this->table;
