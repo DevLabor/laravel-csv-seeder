@@ -46,7 +46,7 @@ class ProductsTableSeeder extends CsvSeeder {
 You can install the package via composer:
 
 ```bash
-composer require devlabor/csv-seeder
+composer require devlabor/laravel-csv-seeder
 ```
 
 ## Usage

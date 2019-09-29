@@ -1,6 +1,6 @@
 {
     "name": "devlabor/laravel-csv-seeder",
-	"version": "1.0.0-dev",
+	"version": "1.0.0",
 	"keywords": [
 		"devlabor",
 		"csv",
@@ -10,7 +10,7 @@
 	"homepage": "https://github.com/devlabor/laravel-csv-seeder",
 	"license": "MIT",
     "require": {
-        "laravel/framework": "^5.8"
+        "laravel/framework": ">=5.8"
     },
     "authors": [
         {
